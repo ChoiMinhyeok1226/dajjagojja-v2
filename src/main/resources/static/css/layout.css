@@ -1,0 +1,252 @@
+/* =========================================
+   HEADER BASE
+========================================= */
+.header {
+    width: 100%;
+    background: #ffffff;
+    padding: 12px 20px;
+    border-bottom: 1px solid #ececec;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 메인 컨테이너 폭 최적화 */
+.header-container {
+    width: 100%;
+    max-width: 1700px;  /* 화면 넓은 환경 유지 */
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: 1.2fr auto 1.2fr; /* 좌측/우측 비율 조정 */
+    align-items: center;
+
+    padding: 0 40px; /* 기존 80px → 절반으로 축소 */
+    box-sizing: border-box;
+}
+
+/* 위치 고정 */
+.left-area {
+    justify-self: start;
+}
+
+.center-area {
+    justify-self: center;
+}
+
+.right-area {
+    justify-self: end;
+}
+
+/* =========================================
+   PAGE WRAPPER
+========================================= */
+.page-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+
+    padding-left: 80px;
+    padding-right: 80px;
+    box-sizing: border-box;
+}
+
+/* =========================================
+   LEFT AREA (User Info)
+========================================= */
+.left-area .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-icon {
+    font-size: 1.4rem;
+    color: #777;
+}
+
+.username {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+}
+
+.welcome {
+    font-size: 0.95rem;
+    color: #666;
+}
+
+/* =========================================
+   CENTER AREA (Logo)
+========================================= */
+.center-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.center-area .logo {
+    height: 45px;
+}
+
+.center-area .title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+}
+
+/* =========================================
+   RIGHT AREA (Navigation)
+========================================= */
+.right-area {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 18px;
+}
+
+.nav-menu a {
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    text-decoration: none;
+    color: #444;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.nav-menu a:hover {
+    background-color: #f5f7ff;
+    color: #255ff4;
+}
+
+.logout-btn {
+    padding: 6px 14px;
+    background-color: #ffe1e1;
+    border-radius: 6px;
+    color: #d33;
+    text-decoration: none;
+    transition: .2s;
+}
+
+.logout-btn:hover {
+    background-color: #ffcccc;
+}
+
+/* =========================================
+   🔽 노트북 최적화 (1280px 이하)
+   — 기능 영향 없음, UI만 축소
+========================================= */
+@media (max-width: 1280px) {
+
+    .header-container {
+        grid-template-columns: 1fr auto 1fr;
+        padding: 0 20px;
+    }
+
+    .page-container {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+
+    .center-area .title {
+        font-size: 1.3rem;
+    }
+
+    .nav-menu a {
+        font-size: 0.85rem;
+        padding: 5px 8px;
+    }
+
+    .username {
+        font-size: 0.9rem;
+    }
+
+    .user-icon {
+        font-size: 1.2rem;
+    }
+
+    .right-area {
+        gap: 12px;
+    }
+}
+
+/* =========================================
+   🔽 태블릿 대응 (1024px 이하)
+========================================= */
+@media (max-width: 1024px) {
+
+    .header-container {
+        grid-template-columns: 1fr;
+        row-gap: 12px;
+        padding: 10px 20px;
+        text-align: center;
+    }
+
+    .left-area,
+    .right-area {
+        justify-self: center;
+    }
+
+    .nav-menu {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+/* =========================================
+   🔽 모바일 대응 (768px 이하)
+========================================= */
+@media (max-width: 768px) {
+
+    .center-area .title {
+        font-size: 1.1rem;
+    }
+
+    .nav-menu a {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+
+    .page-container {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+/*.toast-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(50, 50, 50, 0.9);
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    animation: fadeInOut 2s ease;
+    z-index: 9999;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    10% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    90% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}*/

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{/common/layout}"
+      lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>코스 리뷰 수정</title>
+
+    <!-- 🔥 이 페이지 전용 스타일 -->
+    <th:block layout:fragment="head">
+        <style>
+            :root {
+                --main-color: #7E57C2;
+                --hover-color: #6A4CA5;
+                --gray-bg: #F5F6F8;
+                --deep-text: #2C3E50;
+                --light-border: #E0E0E0;
+                --star-color: #FFC107;
+            }
+
+            body {
+                background: var(--gray-bg);
+            }
+
+            .content-wrapper {
+                max-width: 1000px;
+                margin: 40px auto;
+                padding: 30px;
+                background: #fff;
+                border-radius: 10px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+                padding: 15px;
+                border: 1px solid #EAEAEA;
+                border-radius: 6px;
+                background: #FDFDFF;
+            }
+
+            .form-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #4A4A4A;
+            }
+
+            input[type="text"],
+            textarea {
+                width: calc(100% - 20px);
+                padding: 10px;
+                border: 1px solid #DDD;
+                border-radius: 4px;
+                font-size: 14px;
+                font-family: inherit;
+                box-sizing: border-box;
+            }
+
+            textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+
+            .star-rating {
+                display: inline-block;
+                font-size: 28px;
+                cursor: pointer;
+                color: #CCC;
+            }
+
+            .star-rating span {
+                margin-right: 2px;
+                transition: color 0.2s;
+            }
+
+            .star-rating span.selected {
+                color: var(--star-color);
+            }
+
+            .btn-submit,
+            .btn-back {
+                width: 48%;
+                padding: 14px;
+                font-size: 17px;
+                font-weight: 700;
+                border: none;
+                border-radius: 10px;
+                cursor: pointer;
+                margin-top: 30px;
+            }
+
+            .btn-submit {
+                background: linear-gradient(45deg, var(--main-color), var(--hover-color));
+                color: white;
+            }
+
+            .btn-submit:hover {
+                opacity: .92;
+            }
+
+            .btn-back {
+                background: #E0E0E0;
+                color: var(--deep-text);
+            }
+
+            /* 이미지 미리보기 */
+            .image-preview-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 10px;
+            }
+
+            .image-wrapper {
+                position: relative;
+                width: 120px;
+                height: 120px;
+                border-radius: 6px;
+                border: 1px solid #DDD;
+                overflow: hidden;
+            }
+
+            .image-wrapper img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .image-wrapper .delete-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                border: none;
+                background: rgba(0, 0, 0, 0.6);
+                color: white;
+                cursor: pointer;
+                line-height: 19px;
+                text-align: center;
+            }
+
+            .image-wrapper.deleted {
+                opacity: 0.5;
+                border: 1px dashed #E74C3C;
+            }
+
+            .spot-review-section {
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 2px solid #EEE;
+            }
+
+            .spot-review-section .form-group {
+                background: #F7F5FF;
+                border: 1px solid #D0C4FF;
+            }
+
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+<main layout:fragment="content">
+
+    <div class="content-wrapper">
+        <div id="review-form-container">
+            <p style="text-align:center;color:#7E57C2;font-weight:600;">
+                데이터를 불러오는 중입니다...
+            </p>
+        </div>
+
+        <!-- 새로운 이미지 업로드 영역 -->
+        <div class="form-group" id="image-upload-area" style="display:none;">
+            <label>새로운 이미지 추가</label>
+            <input type="file" id="newImages" multiple accept="image/*" onchange="previewNewImages(event)">
+            <div class="image-preview-container" id="new-image-preview"></div>
+        </div>
+
+        <div style="display:flex;gap:4%;justify-content:center;">
+            <button type="button" class="btn-back" onclick="history.back()">뒤로가기</button>
+            <button type="button" class="btn-submit" onclick="submitReview(event)">리뷰 수정 완료</button>
+        </div>
+    </div>
+
+</main>
+
+<!-- ========================================================= -->
+<!-- 🔥 SCRIPT (공통 common.js는 layout.html에서 자동 포함됨) -->
+<!-- ========================================================= -->
+<th:block layout:fragment="script">
+    <script th:inline="javascript">
+        /* <![CDATA[ */
+
+        const planId = /*[[${planId}]]*/ null;
+
+        let mainReviewId = null;
+        let deletedImageUrls = [];
+        let newImageFiles = [];
+
+        /* ------------------- 데이터 로드 ------------------- */
+        async function loadReviewData() {
+            const container = document.getElementById("review-form-container");
+
+            try {
+                const res = await fetch(`/reviews/plan/${planId}/complex-edit`, {credentials: "include"});
+                const data = await res.json();
+
+                if (!res.ok) {
+                    container.innerHTML = `<p style="text-align:center;color:red;">리뷰 정보를 불러오는 데 실패했습니다.</p>`;
+                    return;
+                }
+
+                mainReviewId = data.mainReview.reviewId;
+
+                renderReviewForm(data);
+
+                document.getElementById("image-upload-area").style.display = "block";
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p style="text-align:center;color:red;">네트워크 오류</p>`;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", loadReviewData);
+
+
+        /* ------------------- 화면 렌더링 ------------------- */
+        function renderReviewForm(data) {
+            const container = document.getElementById("review-form-container");
+            const main = data.mainReview;
+            const spots = data.spotReviews || [];
+
+            let html = `
+        <h2 style="margin-bottom:15px;">코스 리뷰 수정</h2>
+        <p style="color:#6A4CA5;font-weight:600;margin-bottom:25px;">
+            [코스: ${data.courseTitle}]
+        </p>
+
+        <form id="reviewForm">
+            <input type="hidden" name="mainReview.reviewId" value="${main.reviewId}">
+            <input type="hidden" name="mainReview.planId" value="${main.planId}">
+            <input type="hidden" name="mainReview.targetId" value="${main.targetId}">
+            <input type="hidden" name="mainReview.targetType" value="${main.targetType}">
+
+            <div class="form-group">
+                <label>리뷰 제목</label>
+                <input type="text" name="mainReview.title" value="${main.title}">
+            </div>
+
+            <div class="form-group">
+                <label>별점</label>
+                <div class="star-rating" data-target="mainReview.rating">
+                    ${getStarSpans(main.rating)}
+                </div>
+                <input type="hidden" name="mainReview.rating" value="${main.rating}">
+            </div>
+
+            <div class="form-group">
+                <label>내용</label>
+                <textarea name="mainReview.content">${main.content || ""}</textarea>
+            </div>
+        </form>
+    `;
+
+            /* 기존 이미지 */
+            if (main.imageUrls?.length) {
+                html += `
+        <div class="form-group">
+            <label>기존 이미지</label>
+            <div class="image-preview-container" id="existing-image-preview">
+                ${main.imageUrls.map(url => renderExistingImage(url)).join("")}
+            </div>
+        </div>`;
+            }
+
+            /* 스팟 리뷰 섹션 */
+            html += `
+        <div class="spot-review-section">
+            <h3>관광지 리뷰 수정</h3>
+            ${spots.map((spot, i) => renderSpot(spot, i)).join("")}
+        </div>
+    `;
+
+            container.innerHTML = html;
+
+            /* 별점 이벤트 바인딩 */
+            document.querySelectorAll(".star-rating").forEach(el => {
+                el.addEventListener("click", handleStarClick);
+            });
+        }
+
+
+        /* ------------------- HTML 생성 함수 ------------------- */
+
+        function getStarSpans(rating) {
+            let html = "";
+            for (let i = 1; i <= 5; i++) {
+                html += `<span data-value="${i}" class="${i <= rating ? "selected" : ""}">★</span>`;
+            }
+            return html;
+        }
+
+        function renderExistingImage(url) {
+            return `
+        <div class="image-wrapper" data-url="${url}">
+            <img src="${url}">
+            <button class="delete-btn" onclick="deleteExistingImage('${url}')">×</button>
+        </div>`;
+        }
+
+        function renderSpot(spot, i) {
+            const prefix = `spotReviews[${i}]`;
+            return `
+        <div class="form-group spot-review-item">
+            <label>📍 ${spot.placeTitle}</label>
+
+            <input type="hidden" name="${prefix}.reviewId" value="${spot.reviewId}">
+            <input type="hidden" name="${prefix}.targetId" value="${spot.targetId}">
+            <input type="hidden" name="${prefix}.targetType" value="${spot.targetType}">
+
+            <div class="form-group" style="border: none; padding: 0;">
+                <label>리뷰 제목</label>
+                <input type="text" name="${prefix}.placeTitle" value="${spot.placeTitle}">
+            </div>
+
+            <div class="form-group" style="border: none; padding: 0;">
+                <label>별점</label>
+                <div class="star-rating" data-target="${prefix}.rating">
+                    ${getStarSpans(spot.rating)}
+                </div>
+                <input type="hidden" name="${prefix}.rating" value="${spot.rating}">
+            </div>
+
+            <div class="form-group" style="border: none; padding: 0;">
+                <label>내용</label>
+                <textarea name="${prefix}.content">${spot.content || ""}</textarea>
+            </div>
+        </div>`;
+        }
+
+
+        /* ------------------- 별점 클릭 ------------------- */
+        function handleStarClick(e) {
+            const span = e.target.closest("span");
+            if (!span) return;
+
+            const wrap = e.currentTarget;
+            const value = parseInt(span.dataset.value);
+            const inputName = wrap.dataset.target;
+
+            wrap.querySelectorAll("span").forEach(s => {
+                s.classList.toggle("selected", parseInt(s.dataset.value) <= value);
+            });
+
+            document.querySelector(`input[name="${inputName}"]`).value = value;
+        }
+
+
+        /* ------------------- 이미지 삭제 ------------------- */
+        function deleteExistingImage(url) {
+            const wrapper = document.querySelector(`.image-wrapper[data-url="${url}"]`);
+            wrapper.classList.toggle("deleted");
+
+            if (wrapper.classList.contains("deleted")) {
+                deletedImageUrls.push(url);
+            } else {
+                deletedImageUrls = deletedImageUrls.filter(u => u !== url);
+            }
+        }
+
+
+        /* ------------------- 새 이미지 미리보기 ------------------- */
+        function previewNewImages(e) {
+            const files = Array.from(e.target.files);
+            const preview = document.getElementById("new-image-preview");
+
+            preview.innerHTML = "";
+            newImageFiles = [];
+
+            files.forEach(f => {
+                if (!f.type.startsWith("image/")) return;
+
+                const reader = new FileReader();
+                reader.onload = ev => {
+                    preview.innerHTML += `
+                <div class="image-wrapper">
+                    <img src="${ev.target.result}">
+                    <button class="delete-btn" onclick="removeNewImage('${f.name}', this)">×</button>
+                </div>`;
+                };
+                reader.readAsDataURL(f);
+                newImageFiles.push(f);
+            });
+        }
+
+        function removeNewImage(name, btn) {
+            newImageFiles = newImageFiles.filter(f => f.name !== name);
+            btn.parentElement.remove();
+        }
+
+
+        /* ------------------- 최종 제출 ------------------- */
+        async function submitReview(ev) {
+            ev.preventDefault();
+
+            const form = document.getElementById("reviewForm");
+            const formData = new FormData();
+
+            /* DTO 생성 */
+            const mainReview = {
+                reviewId: form["mainReview.reviewId"].value,
+                planId: form["mainReview.planId"].value,
+                targetType: form["mainReview.targetType"].value,
+                targetId: form["mainReview.targetId"].value,
+                title: form["mainReview.title"].value,
+                content: form["mainReview.content"].value,
+                rating: parseInt(form["mainReview.rating"].value)
+            };
+
+            const spotDtoList = Array.from(document.querySelectorAll(".spot-review-item")).map((item, idx) => {
+                const prefix = `spotReviews[${idx}]`;
+
+                return {
+                    reviewId: item.querySelector(`input[name="${prefix}.reviewId"]`).value,
+                    placeTitle: item.querySelector(`input[name="${prefix}.placeTitle"]`).value,
+                    targetType: item.querySelector(`input[name="${prefix}.targetType"]`).value,
+                    targetId: item.querySelector(`input[name="${prefix}.targetId"]`).value,
+                    rating: parseInt(item.querySelector(`input[name="${prefix}.rating"]`).value),
+                    content: item.querySelector(`textarea[name="${prefix}.content"]`).value
+                };
+            });
+
+            const dto = {
+                mainReview: mainReview,
+                spotReviews: spotDtoList,
+                deletedImageUrls: deletedImageUrls
+            };
+
+            formData.append("dto", new Blob([JSON.stringify(dto)], {type: "application/json"}));
+
+            newImageFiles.forEach(f => {
+                formData.append("newImages", f);
+            });
+
+            /* 서버 요청 */
+            try {
+                const res = await fetch(`/reviews/${mainReviewId}`, {
+                    method: "PUT",
+                    body: formData,
+                    credentials: "include"
+                });
+
+                if (!res.ok) {
+                    alert("리뷰 수정 실패");
+                    return;
+                }
+
+                alert("리뷰 수정이 완료되었습니다!");
+                location.href = "/reviews/view/search/my";
+
+            } catch (err) {
+                console.error(err);
+                alert("네트워크 오류");
+            }
+        }
+
+        /* ]]> */
+    </script>
+</th:block>
+
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      lang="ko"
+      layout:decorate="~{/common/layout}">
+
+<head>
+    <meta charset="UTF-8"/>
+    <title>리뷰 등록 | Travel Planning</title>
+
+    <link rel="stylesheet" th:href="@{/css/mypage.css}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap"/>
+
+    <th:block layout:fragment="head">
+        <style>
+            /* 페이지 전용 변수 */
+            :root {
+                --main-color: #7E57C2;
+                --hover-color: #6A4CA5;
+                --gray-bg: #F5F6F8;
+                --deep-text: #2C3E50;
+                --light-border: #E0E0E0;
+                --light-bg: #FAFAFA;
+                --star-color: #FFC107;
+            }
+
+            body {
+                background: var(--gray-bg);
+            }
+
+            .content-wrapper {
+                max-width: 900px;
+                margin: 40px auto;
+                padding: 20px;
+            }
+
+            .target-title {
+                font-size: 28px;
+                text-align: center;
+                font-weight: 800;
+                margin-bottom: 30px;
+                color: var(--deep-text);
+            }
+
+            #form-container {
+                padding: 30px;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            }
+
+            .plan-title {
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--main-color);
+                padding-bottom: 15px;
+                border-bottom: 1px dashed var(--light-border);
+                margin-bottom: 25px;
+            }
+
+            .course-review-box {
+                background: #F9F9FC;
+                padding: 30px;
+                border-radius: 12px;
+                border: 1px solid #EAEAEA;
+                margin-bottom: 30px;
+            }
+
+            .form-group {
+                margin-bottom: 25px;
+            }
+
+            .form-group label {
+                font-size: 16px;
+                font-weight: 700;
+                margin-bottom: 10px;
+                display: block;
+            }
+
+            .form-input,
+            .form-textarea {
+                width: 100%;
+                padding: 14px;
+                border: 1px solid var(--light-border);
+                border-radius: 8px;
+                font-size: 16px;
+            }
+
+            .form-textarea {
+                min-height: 200px;
+            }
+
+            .rating-stars {
+                display: flex;
+                flex-direction: row-reverse;
+            }
+
+            .rating-stars input {
+                display: none;
+            }
+
+            .rating-stars label {
+                font-size: 32px;
+                cursor: pointer;
+                color: #CCC;
+                margin-right: 5px;
+            }
+
+            .rating-stars input:checked ~ label,
+            .rating-stars label:hover,
+            .rating-stars label:hover ~ label {
+                color: var(--star-color);
+            }
+
+            .day-section {
+                border: 1px solid #DDD;
+                border-radius: 10px;
+                padding: 20px;
+                background: #FFFFFF;
+                margin-bottom: 20px;
+            }
+
+            .place-item {
+                padding: 20px;
+                background: var(--light-bg);
+                border-radius: 8px;
+                border: 1px solid #F0F0F0;
+                margin-bottom: 15px;
+            }
+
+            .spot-content-input {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid var(--light-border);
+                border-radius: 8px;
+                min-height: 80px;
+            }
+
+            /* 이미지 미리보기 — D 스타일 유지 */
+            .image-preview-wrapper {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-top: 15px;
+            }
+
+            .image-preview {
+                position: relative;
+                width: 100px;
+                height: 100px;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 2px solid var(--light-border);
+                box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+            }
+
+            .image-preview img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .delete-image-btn {
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(0, 0, 0, 0.6);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                text-align: center;
+                cursor: pointer;
+            }
+
+            /* ========== ⭐ 버튼 영역 (원본 디자인 완전 복원) ========== */
+            .button-group {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #EEE;
+            }
+
+            /* 공통 버튼 */
+            .btn-submit, .btn-back {
+                padding: 15px 30px;
+                border: none;
+                border-radius: 10px;
+                font-size: 18px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            /* 등록 버튼 */
+            .btn-submit {
+                background: linear-gradient(45deg, var(--main-color), var(--hover-color));
+                color: white;
+                box-shadow: 0 4px 10px rgba(126, 87, 194, 0.3);
+            }
+
+            .btn-submit:hover {
+                opacity: 0.95;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 15px rgba(126, 87, 194, 0.4);
+            }
+
+            .btn-submit:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+                box-shadow: none;
+                transform: none;
+            }
+
+            /* 뒤로가기 버튼 */
+            .btn-back {
+                background: #E0E0E0;
+                color: var(--deep-text);
+            }
+
+            .btn-back:hover {
+                background: #d4d4d4;
+                transform: translateY(-2px);
+            }
+
+        </style>
+    </th:block>
+</head>
+
+
+<body>
+
+<main layout:fragment="content">
+
+    <div class="content-wrapper">
+        <h2 class="target-title">📍 내 여행 코스 리뷰</h2>
+
+        <div id="form-container">
+            <p style="text-align:center;color:#7F8C8D;">리뷰 대상을 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+</main>
+
+<th:block layout:fragment="script">
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+
+            const url = new URL(window.location.href);
+            const planId = url.searchParams.get("planId");
+            const container = document.getElementById("form-container");
+
+            if (!planId) {
+                container.innerHTML = `<p style="text-align:center;color:#e74c3c;">잘못된 접근입니다. planId가 없습니다.</p>`;
+                return;
+            }
+
+            try {
+                const res = await fetch(`/reviews/course?planId=${planId}`, {credentials: "include"});
+                const planRes = await fetch(`/plans/${planId}`, {credentials: "include"});
+
+                if (!res.ok || !planRes.ok) throw new Error();
+
+                const course = await res.json();
+                const plan = await planRes.json();
+
+                const grouped = {};
+                plan.data.coursePlaces.forEach(p => {
+                    if (!grouped[p.dayNo]) grouped[p.dayNo] = [];
+                    grouped[p.dayNo].push(p);
+                });
+
+                /* 장소 HTML 만들기 */
+                let placeHtml = `<h3 class="target-title">📍 DAY별 장소 리뷰</h3>`;
+                Object.keys(grouped).sort().forEach(day => {
+                    placeHtml += `<div class="day-section"><div class="day-title">DAY ${day}</div>`;
+
+                    grouped[day].forEach(place => {
+                        placeHtml += `
+                <div class="place-item spot-review-item" data-id="${place.id}" data-type="${place.type}">
+                    <h4>${place.title}</h4>
+                    <p>${place.address || '주소 정보 없음'}</p>
+
+                    <textarea class="spot-content-input"
+                              placeholder="${place.title}에 대한 후기를 작성해주세요"></textarea>
+
+                    <div class="rating-stars spot-rating-group">
+                        <input type="radio" id="spot-star5-${place.id}" name="spot-rating-${place.id}" value="5"><label for="spot-star5-${place.id}">★</label>
+                        <input type="radio" id="spot-star4-${place.id}" name="spot-rating-${place.id}" value="4"><label for="spot-star4-${place.id}">★</label>
+                        <input type="radio" id="spot-star3-${place.id}" name="spot-rating-${place.id}" value="3"><label for="spot-star3-${place.id}">★</label>
+                        <input type="radio" id="spot-star2-${place.id}" name="spot-rating-${place.id}" value="2"><label for="spot-star2-${place.id}">★</label>
+                        <input type="radio" id="spot-star1-${place.id}" name="spot-rating-${place.id}" value="1"><label for="spot-star1-${place.id}">★</label>
+                    </div>
+                </div>`;
+                    });
+
+                    placeHtml += `</div>`;
+                });
+
+                /* 메인 HTML 구성 */
+                container.innerHTML = `
+            <h3 class="plan-title">여행 제목: ${course.title.replace("전체 여행 코스", "").trim()}</h3>
+
+            <form id="reviewForm" enctype="multipart/form-data">
+                <input type="hidden" name="planId" value="${planId}">
+                <input type="hidden" name="targetId" value="${course.targetId}">
+                <input type="hidden" name="targetType" value="${course.type}">
+
+                <div class="course-review-box">
+                    <label>리뷰 제목</label>
+                    <input type="text" name="title" class="form-input">
+
+                    <label>리뷰 내용</label>
+                    <textarea name="content" class="form-textarea"></textarea>
+
+                    <label>별점</label>
+                    <div class="rating-stars">
+                        <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                    </div>
+
+                    <label for="review-images">사진 업로드</label>
+                    <input type="file" id="review-images" name="images" multiple>
+
+                    <!-- 미리보기 영역 -->
+                    <div class="image-preview-wrapper" id="preview-wrapper"></div>
+                </div>
+
+                <div class="place-list">${placeHtml}</div>
+
+                <div class="button-group">
+                    <button type="button" class="btn-back" onclick="history.back()">뒤로가기</button>
+                    <button type="submit" class="btn-submit">리뷰 등록</button>
+                </div>
+            </form>
+        `;
+
+                /* --------------------------- */
+                /* 이미지 미리보기 + 삭제 기능 */
+                /* --------------------------- */
+
+                const imageInput = document.getElementById("review-images");
+                const previewWrapper = document.getElementById("preview-wrapper");
+
+                // 선택된 파일 목록
+                let selectedFiles = [];
+
+                imageInput.addEventListener("change", () => {
+                    const files = Array.from(imageInput.files);
+
+                    selectedFiles = files; // 전체 교체 방식
+
+                    previewWrapper.innerHTML = "";
+
+                    selectedFiles.forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const preview = document.createElement("div");
+                            preview.className = "image-preview";
+                            preview.innerHTML = `
+                        <img src="${reader.result}">
+                        <button class="delete-image-btn" data-index="${index}">X</button>
+                    `;
+                            previewWrapper.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                // 개별 삭제 버튼
+                previewWrapper.addEventListener("click", (e) => {
+                    if (!e.target.classList.contains("delete-image-btn")) return;
+
+                    const index = parseInt(e.target.dataset.index);
+                    selectedFiles.splice(index, 1);
+
+                    // input.files를 업데이트(트릭 필요)
+                    const dataTransfer = new DataTransfer();
+                    selectedFiles.forEach(f => dataTransfer.items.add(f));
+                    imageInput.files = dataTransfer.files;
+
+                    // UI 다시 렌더링
+                    previewWrapper.innerHTML = "";
+                    selectedFiles.forEach((file, i) => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const preview = document.createElement("div");
+                            preview.className = "image-preview";
+                            preview.innerHTML = `
+                        <img src="${reader.result}">
+                        <button class="delete-image-btn" data-index="${i}">X</button>
+                    `;
+                            previewWrapper.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+
+                /* --------------------------- */
+                /* 리뷰 등록 submit */
+                /* --------------------------- */
+
+                document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+                    e.preventDefault();
+
+                    const form = e.target;
+
+                    // 메인 리뷰
+                    const mainReview = {
+                        planId,
+                        targetType: form.targetType.value,
+                        targetId: parseInt(form.targetId.value),
+                        title: form.title.value,
+                        content: form.content.value,
+                        rating: parseInt(form.querySelector('input[name="rating"]:checked')?.value || '0')
+                    };
+
+                    if (!mainReview.title || !mainReview.content || mainReview.rating === 0) {
+                        alert("리뷰 제목, 내용, 별점은 필수 입력입니다.");
+                        return;
+                    }
+
+                    // 장소 리뷰
+                    const spotReviews = [];
+                    document.querySelectorAll(".spot-review-item").forEach(item => {
+                        const c = item.querySelector(".spot-content-input")?.value.trim();
+                        const r = parseInt(item.querySelector(".spot-rating-group input:checked")?.value || "0");
+
+                        if (c || r) {
+                            spotReviews.push({
+                                targetType: item.dataset.type,
+                                targetId: parseInt(item.dataset.id),
+                                rating: r,
+                                content: c
+                            });
+                        }
+                    });
+
+                    const complexReviewReqDto = {mainReview, spotReviews};
+
+                    // FormData 생성
+                    const formData = new FormData();
+
+                    formData.append(
+                        "dto",
+                        new Blob([JSON.stringify(complexReviewReqDto)], {type: "application/json"}),
+                        "dto.json"
+                    );
+
+                    // 이미지
+                    for (const f of selectedFiles)
+                        formData.append("images", f);
+
+                    const submitBtn = document.querySelector(".btn-submit");
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "등록 중...";
+
+                    try {
+                        const response = await fetch("/reviews/complex", {
+                            method: "POST",
+                            body: formData,
+                            credentials: "include"
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            alert("리뷰 등록 실패: " + errorText);
+                            throw new Error();
+                        }
+
+                        alert("리뷰가 성공적으로 등록되었습니다!");
+                        safeRedirect(`/reviews/view/search/my`);
+
+                    } catch (err) {
+                        alert("리뷰 등록 중 오류가 발생했습니다.");
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = "리뷰 등록";
+                    }
+                });
+
+            } catch (err) {
+                container.innerHTML =
+                    `<p style="text-align:center;color:red;">데이터 불러오기 오류</p>`;
+            }
+        });
+    </script>
+</th:block>
+
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{common/layout}"
+      lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>내 리뷰</title>
+
+    <!-- 페이지 전용 CSS -->
+    <th:block layout:fragment="head">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap">
+
+        <style>
+            :root {
+                --main-color: #7E57C2;
+                --hover-color: #6A4CA5;
+                --gray-bg: #F5F6F8;
+                --deep-text: #2C3E50;
+                --light-border: #E0E0E0;
+                --star-color: #FFC107;
+            }
+
+            body {
+                background: var(--gray-bg);
+            }
+
+            .content-wrapper {
+                max-width: 1200px;
+                margin: 40px auto;
+                padding: 30px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+
+            h2 {
+                font-size: 28px;
+                font-weight: 800;
+                color: var(--deep-text);
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 10px;
+                border-bottom: 3px solid var(--main-color);
+            }
+
+            .plan-group {
+                margin-bottom: 30px;
+                padding: 20px;
+                background: white;
+                border-radius: 12px;
+                border: 1px solid var(--light-border);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            }
+
+            .plan-header-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 15px;
+                padding-bottom: 15px;
+                border-bottom: 1px dashed #EEE;
+            }
+
+            .plan-header-top h3 {
+                margin: 0;
+                font-size: 22px;
+                font-weight: 700;
+            }
+
+            .plan-header-top p {
+                margin: 0;
+                font-size: 14px;
+                color: #777;
+            }
+
+            .btn-edit {
+                padding: 8px 18px;
+                border-radius: 8px;
+                border: none;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                background: var(--main-color);
+                color: white;
+                transition: all .2s;
+                box-shadow: 0 2px 5px rgba(126, 87, 194, .2);
+            }
+
+            .btn-edit:hover {
+                background: var(--hover-color);
+                transform: translateY(-1px);
+            }
+
+            .review-list-container {
+                display: grid;
+                grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+                gap: 25px;
+                margin-top: 10px;
+            }
+
+            .review-card {
+                background: #FAFAFA;
+                border-radius: 12px;
+                border: 1px solid var(--light-border);
+                overflow: hidden;
+                cursor: pointer;
+                transition: .3s;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            }
+
+            .review-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(126, 87, 194, .15);
+            }
+
+            .review-image {
+                width: 100%;
+                height: 180px;
+                object-fit: cover;
+            }
+
+            .review-content {
+                padding: 15px;
+            }
+
+            .review-content h4 {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--main-color);
+                margin: 0 0 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .review-content .rating {
+                color: var(--star-color);
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 50px 20px;
+                font-size: 18px;
+                color: #777;
+            }
+
+        </style>
+    </th:block>
+</head>
+
+<body>
+
+<main layout:fragment="content">
+
+    <div class="content-wrapper">
+        <h2>내가 쓴 리뷰</h2>
+        <div id="planReviewList">
+            <p style="text-align:center;color:#777;">작성한 여행 계획을 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+</main>
+
+<!-- SCRIPT -->
+<th:block layout:fragment="script">
+    <script>
+        /* ----------------------------
+         * 여행 계획 + 리뷰 로딩
+         * ---------------------------- */
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPlansAndReviews();
+        });
+
+        async function loadPlansAndReviews() {
+            const listContainer = document.getElementById("planReviewList");
+
+            try {
+                const res = await fetch('/plans', {credentials: 'include'});
+                const planRes = await res.json();
+
+                if (!res.ok || !planRes.data?.length) {
+                    listContainer.innerHTML = `<div class="empty-state">작성한 여행 계획이 없습니다.</div>`;
+                    return;
+                }
+
+                listContainer.innerHTML = "";
+
+                for (const plan of planRes.data) {
+                    const wrap = document.createElement("div");
+                    wrap.className = "plan-group";
+
+                    wrap.innerHTML = `
+                <div class="plan-header-top">
+                    <div>
+                        <h3>${plan.title}</h3>
+                        <p>${plan.startDate} ~ ${plan.endDate}</p>
+                    </div>
+                    <button class="btn-edit" onclick="editPlan(${plan.id})">리뷰 수정</button>
+                </div>
+                <div id="reviews-for-${plan.id}" class="review-list-container">
+                    <p style="color:#777;">리뷰를 불러오는 중...</p>
+                </div>
+            `;
+
+                    listContainer.appendChild(wrap);
+
+                    loadReviewsForPlan(plan.id);
+                }
+
+            } catch (err) {
+                console.error(err);
+                listContainer.innerHTML = `<div class="empty-state">리뷰 목록을 불러오는 중 오류 발생</div>`;
+            }
+        }
+
+        async function loadReviewsForPlan(planId) {
+            const container = document.getElementById(`reviews-for-${planId}`);
+
+            try {
+                const targetRes = await fetch(`/reviews/course?planId=${planId}`, {credentials: 'include'});
+                if (!targetRes.ok) {
+                    container.innerHTML = `<p style="color:#888;">이 계획은 리뷰 대상이 아닙니다.</p>`;
+                    return;
+                }
+
+                const targetDto = await targetRes.json();
+                const courseId = targetDto.targetId;
+                const courseType = targetDto.type;
+
+                const reviewRes = await fetch(`/reviews/target?type=${courseType}&id=${courseId}`, {
+                    credentials: 'include'
+                });
+
+                if (!reviewRes.ok) {
+                    container.innerHTML = `<p style="color:#888;">리뷰가 없습니다.</p>`;
+                    return;
+                }
+
+                const reviewPage = await reviewRes.json();
+
+                if (!reviewPage.content?.length) {
+                    container.innerHTML = `<p style="color:#888;">리뷰가 없습니다.</p>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+
+                reviewPage.content.forEach(r => {
+                    container.innerHTML += `
+                <div class="review-card">
+                    <img class="review-image" src="${(r.imageUrls?.length ? r.imageUrls[0] : '/images/default-thumbnail.png')}" />
+                    <div class="review-content">
+                        <h4>${r.title}</h4>
+                        <p class="rating">★ ${r.rating}</p>
+                        <p>${r.content}</p>
+                    </div>
+                </div>
+            `;
+                });
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<p style="color:red;">리뷰 로딩 실패</p>`;
+            }
+        }
+
+        /* ----------------------------
+         * 리뷰 수정 이동
+         * ---------------------------- */
+        function editPlan(planId) {
+            safeRedirect(`/reviews/view/edit?planId=${planId}`);
+        }
+
+    </script>
+</th:block>
+
+</body>
+</html>

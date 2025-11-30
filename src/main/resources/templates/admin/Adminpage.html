@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드 | Travel Planing</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <link rel="stylesheet" th:href="@{/css/adminpage.css}">
+
+</head>
+<body>
+<!-- 헤더 -->
+<header>
+    <div class="header-left">
+        <img th:src="@{/images/logo.png}" alt="Logo" src="/api/placeholder/50/50">
+        <div class="title">TRAVEL PLANING</div>
+    </div>
+    <div class="header-right">
+        <div class="welcome-text">
+            <span class="admin-badge">관리자</span>님 환영합니다.
+        </div>
+        <nav class="nav">
+            <a th:href="@{/spots/view/tourspotlist}" class="nav-link">
+                <span class="nav-icon">🏠</span>
+                <span>홈</span>
+            </a>
+            <a th:href="@{/admin/view/adminpage}" class="nav-link active">
+                <span class="nav-icon">📊</span>
+                <span>대시보드</span>
+            </a>
+            <a th:href="@{/admin/view/members}" class="nav-link">
+                <span class="nav-icon">👥</span>
+                <span>회원관리</span>
+            </a>
+            <a th:href="@{/admin/view/tourspot}" class="nav-link">
+                <span class="nav-icon">🗺️</span>
+                <span>관광지관리</span>
+            </a>
+            <a th:href="@{/admin/view/acc}" class="nav-link">
+                <span class="nav-icon">🏨</span>
+                <span>숙소관리</span>
+            </a>
+            <a href="javascript:void(0);" class="nav-link logout" onclick="handleLogout()">
+                <span class="nav-icon">🚪</span>
+                <span>로그아웃</span>
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- 메인 컨텐츠 -->
+<main>
+    <!-- 페이지 헤더 -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <span class="title-icon">📊</span>
+            관리자 대시보드
+        </h1>
+        <p class="page-desc">시스템의 전체 현황을 한눈에 확인하세요</p>
+    </div>
+
+    <!-- 통계 카드 -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">전체 회원</span>
+                <span class="stat-icon">👥</span>
+            </div>
+            <div class="stat-value" id="totalMembers">-</div>
+            <div class="stat-change">📈 활성 회원 중심</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">전체 관광지</span>
+                <span class="stat-icon">🗺️</span>
+            </div>
+            <div class="stat-value" id="totalTourspots">-</div>
+            <div class="stat-change">✨ 최신 데이터</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <span class="stat-label">전체 숙소</span>
+                <span class="stat-icon">🏨</span>
+            </div>
+            <div class="stat-value" id="totalAccs">-</div>
+            <div class="stat-change">🔄 실시간 업데이트</div>
+        </div>
+    </div>
+
+    <!-- 데이터 테이블 그리드 -->
+    <div class="data-grid">
+        <!-- 회원 정보 카드 -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <h2 class="card-title">
+                    <span>👥</span>
+                    회원 정보
+                </h2>
+                <button class="more-btn" onclick="location.href='/admin/view/members'">더보기</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="memberTable">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>회원 정보를 불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 숙소 정보 카드 -->
+        <div class="data-card">
+            <div class="data-card-header">
+                <h2 class="card-title">
+                    <span>🏨</span>
+                    숙소 정보
+                </h2>
+                <button class="more-btn" onclick="location.href='/admin/view/acc'">더보기</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="accTable">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>숙소 정보를 불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 관광지 정보 카드 (전체 너비) -->
+        <div class="data-card full-width">
+            <div class="data-card-header">
+                <h2 class="card-title">
+                    <span>🗺️</span>
+                    관광지 정보
+                </h2>
+                <button class="more-btn" onclick="location.href='/admin/view/tourspot'">더보기</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="tourspotTable">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>관광지 정보를 불러오는 중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 푸터 -->
+<footer>
+    <p>&copy; 2025 Travel Planing. All rights reserved.</p>
+</footer>
+
+<script th:src="@{/js/common.js}"></script>
+
+<script>
+    // 페이지 로드 시 데이터 불러오기
+    document.addEventListener('DOMContentLoaded', function() {
+        loadMemberData();
+        loadTourSpotData();
+        loadAccData();
+    });
+
+    // 회원 데이터 불러오기
+    async function loadMemberData() {
+        try {
+            const response = await fetchWithRefresh('/admin/members', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('회원 데이터 로드 실패');
+            }
+
+            const result = await response.json();
+
+            if (result.data && result.data.length > 0) {
+                // 통계 업데이트
+                document.getElementById('totalMembers').textContent = result.data.length;
+
+                const members = result.data.slice(0, 5);
+
+                let html = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>아이디</th>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>전화번호</th>
+                                <th>권한</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                members.forEach(member => {
+                    html += `
+                        <tr>
+                            <td>${member.id || '-'}</td>
+                            <td><strong>${member.loginId || '-'}</strong></td>
+                            <td>${member.username || '-'}</td>
+                            <td>${member.email || '-'}</td>
+                            <td>${member.tel || '-'}</td>
+                            <td>
+                                <span class="badge badge-${member.role === 'ADMIN' ? 'admin' : 'user'}">
+                                    ${member.role || '-'}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge ${member.status === 'Y' ? 'status-active' : 'status-inactive'}">
+                                    ${member.status === 'Y' ? '✓ 활성' : '✗ 비활성'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('memberTable').innerHTML = html;
+            } else {
+                document.getElementById('totalMembers').textContent = '0';
+                document.getElementById('memberTable').innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">👥</span>
+                        <p>등록된 회원이 없습니다.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('회원 데이터 로드 실패:', error);
+            document.getElementById('totalMembers').textContent = '0';
+            document.getElementById('memberTable').innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-icon">⚠️</span>
+                    <p>데이터를 불러올 수 없습니다.</p>
+                </div>
+            `;
+        }
+    }
+
+    // 관광지 데이터 불러오기
+    async function loadTourSpotData() {
+        try {
+            const response = await fetchWithRefresh('/admin/tourspot/list?page=0&size=5&sort=id', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('관광지 데이터 로드 실패');
+            }
+
+            const result = await response.json();
+
+            if (result.data && result.data.content && result.data.content.length > 0) {
+                // 통계 업데이트 - totalElements가 전체 개수
+                const totalCount = result.data.totalElements || result.data.content.length;
+                document.getElementById('totalTourspots').textContent = totalCount;
+
+                const tourspots = result.data.content;
+
+                let html = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>이미지</th>
+                                <th>제목</th>
+                                <th>주소</th>
+                                <th>추천수</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                tourspots.forEach(spot => {
+                    const imgSrc = spot.firstImage || '/images/no-image.png';
+                    const recCount = spot.recCount || 0;
+
+                    html += `
+                        <tr>
+                            <td>${spot.id || '-'}</td>
+                            <td>
+                                <img src="${imgSrc}"
+                                     alt="${spot.title}"
+                                     onerror="this.src='/images/no-image.png'">
+                            </td>
+                            <td>${spot.title || '-'}</td>
+                            <td>${spot.address || '-'}</td>
+                            <td><span class="rec-count">${recCount}</span></td>
+                            <td>
+                                <span class="status-badge ${spot.status === 'Y' ? 'status-active' : 'status-inactive'}">
+                                    ${spot.status === 'Y' ? '✓ 활성' : '✗ 비활성'}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('tourspotTable').innerHTML = html;
+            } else {
+                document.getElementById('totalTourspots').textContent = '0';
+                document.getElementById('tourspotTable').innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">🗺️</span>
+                        <p>등록된 관광지가 없습니다.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('관광지 데이터 로드 실패:', error);
+            document.getElementById('totalTourspots').textContent = '0';
+            document.getElementById('tourspotTable').innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-icon">⚠️</span>
+                    <p>데이터를 불러올 수 없습니다.</p>
+                </div>
+            `;
+        }
+    }
+
+    // 숙소 데이터 불러오기
+    async function loadAccData() {
+        try {
+            const response = await fetchWithRefresh('/accommodations/list?page=0&size=5&sort=id', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('숙소 데이터 로드 실패');
+            }
+
+            const result = await response.json();
+            console.log('숙소 API 응답:', result);
+
+            if (result.data && result.data.contents && result.data.contents.length > 0) {
+                // ⭐ totalElements 사용
+                document.getElementById('totalAccs').textContent = result.data.totalElements || 0;
+
+                const accs = result.data.contents;
+
+                let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>이미지</th>
+                            <th>제목</th>
+                            <th>주소</th>
+                            <th>추천수</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+                accs.forEach(acc => {
+                    const imgSrc = acc.firstImage || '/images/no-image.png';
+                    const recCount = acc.recCount || 0;
+
+                    html += `
+                    <tr>
+                        <td>${acc.id || '-'}</td>
+                        <td>
+                            <img src="${imgSrc}"
+                                 alt="${acc.title}"
+                                 onerror="this.src='/images/no-image.png'">
+                        </td>
+                        <td>${acc.title || '-'}</td>
+                        <td>${acc.address || '-'}</td>
+                        <td><span class="rec-count">${recCount}</span></td>
+                        <td>
+                            <span class="status-badge ${acc.status === 'Y' ? 'status-active' : 'status-inactive'}">
+                                ${acc.status === 'Y' ? '✓ 활성' : '✗ 비활성'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                });
+
+                html += `
+                    </tbody>
+                </table>
+            `;
+
+                document.getElementById('accTable').innerHTML = html;
+            } else {
+                document.getElementById('totalAccs').textContent = '0';
+                document.getElementById('accTable').innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-icon">🏨</span>
+                    <p>등록된 숙소가 없습니다.</p>
+                </div>
+            `;
+            }
+        } catch (error) {
+            console.error('숙소 데이터 로드 실패:', error);
+            document.getElementById('totalAccs').textContent = '0';
+            document.getElementById('accTable').innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">⚠️</span>
+                <p>데이터를 불러올 수 없습니다.</p>
+            </div>
+        `;
+        }
+
+    }
+
+    async function handleLogout() {
+        try {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include' // 쿠키 포함
+            });
+
+            if (response.ok) {
+                alert('로그아웃 되었습니다.');
+                window.location.href = '/login';
+            } else {
+                const result = await response.json();
+                alert(result.message || '로그아웃에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('로그아웃 오류:', error);
+            alert('로그아웃 처리 중 오류가 발생했습니다.');
+        }
+    }
+</script>
+</body>
+</html>

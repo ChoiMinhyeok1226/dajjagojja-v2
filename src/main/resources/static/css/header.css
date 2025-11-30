@@ -1,0 +1,196 @@
+/* =========================================
+   HEADER Base
+========================================= */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    width: 100%;
+    padding: 14px 0; /* 조금 축소 */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* PC 기본 */
+.header-container {
+    max-width: 1800px; /* 조금 축소 */
+    min-width: 1024px; /* 노트북 대응: 1200 → 1024 */
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+
+    padding: 0 80px; /* 여백 축소 */
+}
+
+
+/* =========================================
+   Left (유저정보)
+========================================= */
+.left-area {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.user-icon {
+    font-size: 48px; /* 70px → 48px */
+    color: white;
+}
+
+.username, .welcome {
+    font-size: 26px; /* 45px → 26px */
+    color: rgba(255, 255, 255, 0.9);
+}
+
+
+/* =========================================
+   Center (로고)
+========================================= */
+.center-area {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.center-area .logo {
+    width: 70px; /* 90px → 70px */
+    height: 70px;
+    background: white;
+    padding: 8px;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.center-area .title {
+    font-size: 40px; /* 60px → 40px */
+    font-weight: 800;
+    color: white;
+}
+
+
+/* =========================================
+   메뉴 버튼
+========================================= */
+.right-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.common-nav,
+.admin-nav,
+.login-nav{
+    display: flex;
+    gap: 10px;
+}
+
+.nav-link,
+.logout-btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+
+    width: 180px; /* 230px → 180px */
+    height: 54px; /* 65px → 54px */
+    padding: 0 18px;
+
+    gap: 12px;
+
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.20);
+    color: white;
+    font-size: 18px; /* 20px → 18px */
+
+    backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+}
+
+.nav-link:hover,
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.30);
+    transform: translateY(-2px);
+}
+
+.logout-btn {
+    background: rgba(255, 75, 75, 0.35) !important;
+}
+
+.icon {
+    font-size: 24px; /* 28px → 24px */
+}
+
+
+/* =========================================
+   반응형: 노트북 (≤ 1450px)
+========================================= */
+@media (max-width: 1450px) {
+
+    .header-container {
+        padding: 0 40px;
+        grid-template-columns: 1.2fr auto 1fr;
+    }
+
+    .nav-link,
+    .logout-btn {
+        width: 160px;
+        height: 50px;
+        font-size: 16px;
+    }
+
+    .center-area .title {
+        font-size: 34px;
+    }
+
+    .logo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .username, .welcome {
+        font-size: 22px;
+    }
+}
+
+
+/* =========================================
+   작은 노트북 (≤ 1200px)
+========================================= */
+@media (max-width: 1200px) {
+
+    .header-container {
+        grid-template-columns: 1fr;
+        row-gap: 20px;
+        padding: 20px 20px;
+        min-width: unset; /* 고정폭 강제 제거 */
+    }
+
+    .left-area,
+    .center-area,
+    .right-area {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .common-nav,
+    .admin-nav,
+    .login-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-link,
+    .logout-btn {
+        width: 180px;
+        height: 52px;
+    }
+}
+

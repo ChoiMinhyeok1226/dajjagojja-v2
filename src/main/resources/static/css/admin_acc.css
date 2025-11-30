@@ -1,0 +1,213 @@
+/* ======================
+   숙소 관리 전용 스타일
+   (admin.css 기반, 추가/오버라이드 스타일만 정의)
+====================== */
+
+/* 숙소 추가 버튼 */
+.btn-add-acc {
+    width: 100%;
+    padding: 16px 24px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-add-acc:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-add-acc:active {
+    transform: translateY(0);
+}
+
+.add-icon {
+    font-size: 18px;
+}
+
+/* 숙소 테이블 스타일 */
+.table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.table-container thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f5 100%);
+}
+
+.table-container th {
+    padding: 16px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 13px;
+    color: #4b5563;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.table-container td {
+    padding: 16px 12px;
+    font-size: 14px;
+    color: #1f2937;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table-container tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-container tbody tr.clickable-row {
+    cursor: pointer;
+}
+
+.table-container tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.table-container tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 숙소 썸네일 이미지 */
+.tourspot-thumbnail {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 숙소 제목 */
+.tourspot-title {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+/* 숙소 주소 */
+.tourspot-address {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+/* 추천 수 */
+.rec-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 4px 8px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.page-btn,
+.page-number {
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #4b5563;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+}
+
+.page-btn:hover,
+.page-number:hover {
+    background-color: #f9fafb;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.page-number.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.prev-btn,
+.next-btn {
+    font-weight: 700;
+}
+
+/* 빈 상태 스타일 */
+.empty-row td {
+    padding: 60px 20px !important;
+}
+
+.empty-state {
+    text-align: center;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.empty-state p {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .tourspot-thumbnail {
+        width: 60px;
+        height: 45px;
+    }
+
+    .table-container th,
+    .table-container td {
+        padding: 12px 8px;
+        font-size: 12px;
+    }
+
+    .btn-add-acc {
+        padding: 14px 20px;
+        font-size: 14px;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .page-btn,
+    .page-number {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+}

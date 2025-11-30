@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원정보 수정 | TRAVEL PLANING</title>
+    <link rel="stylesheet" th:href="@{/css/member-edit.css}">
+</head>
+
+<body>
+<header>
+    <div class="header-container">
+        <div class="header-left">
+            <img th:src="@{/images/logo.png}" alt="Logo" class="logo" src="/api/placeholder/50/50">
+            <span class="title">TRAVEL PLANING</span>
+        </div>
+
+        <div class="header-right">
+            <span id="welcome-text">환영합니다</span>
+            <nav class="nav-links">
+                <a th:href="@{/spots/view/tourspotlist}">Home</a>
+                <a th:href="@{/member/view/mypage}">마이페이지</a>
+                <a href="javascript:void(0);" class="nav-link logout" onclick="handleLogout()"></a>
+
+            </nav>
+        </div>
+    </div>
+</header>
+
+<main>
+    <h2>회원정보 수정</h2>
+
+    <div class="edit-container">
+        <!-- 왼쪽: 프로필 이미지 -->
+        <div class="profile-section">
+            <img id="profileImg"
+                 src="/images/default-profile.png"
+                 alt="프로필 이미지"
+                 class="profile-img">
+
+            <label for="imageFile" class="upload-btn">
+                <span>사진 수정</span>
+            </label>
+            <input type="file"
+                   id="imageFile"
+                   name="imageFile"
+                   accept="image/*"
+                   hidden
+                   onchange="previewImage(event)">
+
+            <div class="info-card">
+                <p>프로필 사진은 JPG, PNG 형식만 가능합니다</p>
+                <p>권장 크기: 500x500px</p>
+            </div>
+        </div>
+
+        <!-- 오른쪽: 정보 입력 폼 -->
+        <div class="edit-form">
+            <div class="form-group">
+                <label for="username">이름</label>
+                <input type="text"
+                       id="username"
+                       placeholder="이름을 입력하세요"
+                       required />
+                <span class="error-message" id="username-error">이름은 필수 항목입니다</span>
+            </div>
+
+            <div class="form-group">
+                <label for="tel">전화번호</label>
+                <input type="text"
+                       id="tel"
+                       placeholder="010-0000-0000"
+                       required />
+                <span class="error-message" id="tel-error">전화번호는 필수 항목입니다</span>
+            </div>
+
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email"
+                       id="email"
+                       placeholder="example@email.com"
+                       required />
+                <span class="error-message" id="email-error">올바른 이메일을 입력하세요</span>
+            </div>
+
+            <div class="btn-group">
+                <button type="button" class="btn btn-save" onclick="updateMember()">
+                    <span>수정완료</span>
+                </button>
+                <a href="/member/view/mypage" class="btn btn-cancel">
+                    <span>뒤로가기</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>© 2025 TRAVEL PLANING. All rights reserved.</footer>
+
+<script>
+    // ✅ 로그인한 사용자 정보 조회
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("페이지 로드 - 회원정보 조회 시작");
+
+        fetch("/members/info", {
+            method: "GET",
+            credentials: "include"
+        })
+            .then(res => {
+                console.log("응답 상태:", res.status);
+                if (!res.ok) throw new Error("회원정보 조회 실패");
+                return res.json();
+            })
+            .then(data => {
+                console.log("받은 데이터:", data);
+
+                const member = data.data;
+
+                // 헤더 환영 메시지
+                document.getElementById("welcome-text").innerText = `${member.username} 님 환영합니다.`;
+
+                // 입력 필드에 기존 값 설정
+                document.getElementById("username").value = member.username || "";
+                document.getElementById("email").value = member.email || "";
+                document.getElementById("tel").value = member.tel || "";
+
+                // 플레이스홀더도 업데이트
+                document.getElementById("username").placeholder = member.username || "이름을 입력하세요";
+                document.getElementById("email").placeholder = member.email || "example@email.com";
+                document.getElementById("tel").placeholder = member.tel || "010-0000-0000";
+
+                // 프로필 이미지 표시
+                if (member.image && member.image !== 'default.img') {
+                    // URL이 포함되어 있으면 그대로, 아니면 URL 추가
+                    const imageUrl = member.image.startsWith('http')
+                        ? member.image
+                        : `http://localhost:8090/profile/${member.image}`;
+                    document.getElementById("profileImg").src = imageUrl;
+                    console.log("프로필 이미지:", imageUrl);
+                }
+
+                console.log("회원정보 로드 완료");
+            })
+            .catch(err => {
+                console.error("회원 정보 조회 실패:", err);
+                alert("회원 정보를 불러오지 못했습니다 ❌");
+            });
+    });
+
+    // ✅ 이미지 미리보기
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // 파일 크기 체크 (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('⚠️ 파일 크기가 5MB를 초과합니다.');
+            event.target.value = '';
+            return;
+        }
+
+        // 파일 형식 체크
+        if (!file.type.match('image.*')) {
+            alert('⚠️ 이미지 파일만 업로드 가능합니다.');
+            event.target.value = '';
+            return;
+        }
+
+        console.log("선택된 이미지:", file.name, "크기:", file.size, "bytes");
+
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById("profileImg").src = e.target.result;
+            console.log("이미지 미리보기 완료");
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ✅ 입력 검증
+    function validateForm() {
+        let isValid = true;
+
+        const username = document.getElementById("username");
+        const email = document.getElementById("email");
+        const tel = document.getElementById("tel");
+
+        // 이름 검증
+        if (!username.value.trim()) {
+            username.classList.add('error');
+            document.getElementById('username-error').classList.add('show');
+            isValid = false;
+        } else {
+            username.classList.remove('error');
+            username.classList.add('success');
+            document.getElementById('username-error').classList.remove('show');
+        }
+
+        // 이메일 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email.value.trim() || !emailRegex.test(email.value)) {
+            email.classList.add('error');
+            document.getElementById('email-error').classList.add('show');
+            isValid = false;
+        } else {
+            email.classList.remove('error');
+            email.classList.add('success');
+            document.getElementById('email-error').classList.remove('show');
+        }
+
+        // 전화번호 검증
+        const telValue = tel.value.trim().replace(/-/g, '');
+        const telRegex = /^01[0-9][0-9]{3,4}[0-9]{4}$/;
+        if (!telValue || !telRegex.test(telValue)) {
+            tel.classList.add('error');
+            document.getElementById('tel-error').classList.add('show');
+            isValid = false;
+        } else {
+            tel.classList.remove('error');
+            tel.classList.add('success');
+            document.getElementById('tel-error').classList.remove('show');
+        }
+
+        return isValid;
+    }
+
+    // ✅ 회원정보 수정 요청 (관광지 방식으로 변경)
+    async function updateMember() {
+        console.log("=== 수정 시작 ===");
+
+        // 입력 검증
+        if (!validateForm()) {
+            alert('⚠️ 입력 내용을 확인해주세요.');
+            return;
+        }
+
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const tel = document.getElementById("tel").value.trim();
+
+        console.log("입력된 값:", { username, email, tel });
+
+        // ✅ DTO 객체 생성 (관광지와 동일)
+        const dto = {
+            username: username,
+            email: email,
+            tel: tel
+        };
+
+        console.log("전송할 DTO:", dto);
+        console.log("DTO JSON:", JSON.stringify(dto, null, 2));
+
+        // ✅ FormData 생성 (관광지와 동일한 방식)
+        const formData = new FormData();
+
+        // ✅ DTO를 JSON Blob으로 감싸서 전송 (핵심!)
+        formData.append("dto", new Blob([JSON.stringify(dto)], { type: "application/json" }));
+
+        // ✅ 이미지 파일 추가 (파라미터 이름을 "file"로 변경!)
+        const imageFileInput = document.getElementById("imageFile");
+        if (imageFileInput && imageFileInput.files.length > 0) {
+            const imageFile = imageFileInput.files[0];
+            formData.append("file", imageFile);  // ✅ "imageFile" → "file"로 변경
+            console.log("업로드할 이미지:", imageFile.name, "크기:", imageFile.size, "bytes");
+        } else {
+            console.log("이미지 변경 없음");
+        }
+
+        console.log("전송할 FormData:");
+        for (let pair of formData.entries()) {
+            console.log(pair[0] + ':', pair[1]);
+        }
+
+        // 버튼 비활성화
+        const saveBtn = document.querySelector('.btn-save');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<span>수정 중...</span>';
+        saveBtn.disabled = true;
+
+        try {
+            const res = await fetch("/members/update", {
+                method: "PUT",
+                body: formData,
+                credentials: "include"
+            });
+
+            console.log("응답 상태:", res.status);
+
+            if (res.ok) {
+                const result = await res.json();
+                console.log("응답 데이터:", result);
+                alert("✅ 회원정보 수정이 완료되었습니다!");
+                location.href = "/member/view/mypage";
+            } else {
+                const error = await res.json();
+                console.error("수정 실패:", error);
+                alert(`❌ 수정 실패: ${error.message || '알 수 없는 오류'}`);
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error("요청 실패:", error);
+            alert("❌ 수정 요청 중 오류가 발생했습니다");
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+
+    // 실시간 입력 검증
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputs = document.querySelectorAll('input[type="text"], input[type="email"]');
+
+        inputs.forEach(input => {
+            input.addEventListener('blur', validateForm);
+            input.addEventListener('input', () => {
+                input.classList.remove('error', 'success');
+                const errorMsg = document.getElementById(`${input.id}-error`);
+                if (errorMsg) {
+                    errorMsg.classList.remove('show');
+                }
+            });
+        });
+    });
+    async function handleLogout() {
+        try {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include' // 쿠키 포함
+            });
+
+            if (response.ok) {
+                alert('로그아웃 되었습니다.');
+                window.location.href = '/login';
+            } else {
+                const result = await response.json();
+                alert(result.message || '로그아웃에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('로그아웃 오류:', error);
+            alert('로그아웃 처리 중 오류가 발생했습니다.');
+        }
+    }
+</script>
+</body>
+</html>
