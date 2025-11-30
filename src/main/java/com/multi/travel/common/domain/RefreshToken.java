@@ -18,8 +18,8 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "loginId",nullable = false, unique = true)
-    private String loginId;
+    @Column(nullable = false, unique = true)
+    private String email;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String refreshToken;

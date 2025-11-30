@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TokenProvider {
 
-    private static final String AUTHORITIES_KEY = "auth";  // 클레임에서 권한정보담을키
-    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60 * 3;     // 60분
-    private static final long REFRESH_TOKEN_EXPIRE_TIME =1000L * 60 * 60 * 24; //1000L * 60 * 60 * 24 * 1;  // 1일
+    private static final String AUTHORITIES_KEY = "auth";  // claim 에서 권한정보담을 키
+    private static final long ACCESS_TOKEN_EXPIRE_TIME = 1000 * 60 * 60;     // 1000 * 60 * 60 --> 60분
+    private static final long REFRESH_TOKEN_EXPIRE_TIME =1000L * 60 * 60 * 24; //1000L * 60 * 60 * 24 --> 1일
 
     private final JwtProvider jwtProvider;  // JwtProvider 의존성 추가
     private final Key SKEY;
@@ -34,29 +34,26 @@ public class TokenProvider {
 
     //application.yml 에 정의해놓은 jwt.secret 값을 가져와서 JWT 를 만들 때 사용하는 암호화 키값을 생성
     public TokenProvider(JwtProvider jwtProvider) {
-
         this.jwtProvider = jwtProvider;
         SKEY = jwtProvider.getSecretKey();
         ISSUER = jwtProvider.getIssuer();
-        System.out.println("TokenProvider-------------"+ SKEY);
-        System.out.println("   ISSUER     -------------"+ ISSUER);
-
+        log.info("TokenProvider SKEY ---------------{}", SKEY);
+        log.info("TokenProvider ISSUER ---------------{}", ISSUER);
     }
 
-    public String generateToken(String loginId, List<String> roles, String code) {
+    public String generateToken(String email, List<String> roles, String code) {
 
         Claims claims = Jwts
                 .claims()
-                .setSubject(loginId);
+                .setSubject(email);
 
         // ✅ 두 토큰 모두에 auth 클레임 추가 (역할정보 유지)
         claims.put(AUTHORITIES_KEY, String.join(",", roles));
 
         long now = (new Date()).getTime();
-        Date tokenExpiresIn = new Date();
+        Date tokenExpiresIn;
         if (code.equals("A")) {  //액세스 토큰
             tokenExpiresIn = new Date(now + ACCESS_TOKEN_EXPIRE_TIME);
-            claims.put(AUTHORITIES_KEY, String.join(",", roles)); // List<String> -> 콤마로 구분된 문자열
         } else {  //리프레시 토큰
             tokenExpiresIn = new Date(now + REFRESH_TOKEN_EXPIRE_TIME);
         }
@@ -70,18 +67,12 @@ public class TokenProvider {
                 .setExpiration(tokenExpiresIn)       // payload "exp": 1516239022 (예시) // exp : Expiration Time. 토큰 만료 시각
                 .signWith(SKEY, SignatureAlgorithm.HS512)   // header "alg": "HS512"  // "alg": "서명 시 사용하는 알고리즘",
                 .compact();
-
-
     }
 
     public LocalDateTime getRefreshTokenExpiry() {
-
         LocalDateTime now = LocalDateTime.now();
 
-        LocalDateTime reTokenExpiry = now.plus(REFRESH_TOKEN_EXPIRE_TIME, ChronoUnit.MILLIS);
-
-        return reTokenExpiry;
-
+        return now.plus(REFRESH_TOKEN_EXPIRE_TIME, ChronoUnit.MILLIS);
     }
 
     public boolean validateToken(String token) {
@@ -116,7 +107,7 @@ public class TokenProvider {
 
     public Authentication getAuthentication(String jwt) {
 
-        Claims claims = parseClaimes(jwt);
+        Claims claims = parseClaims(jwt);
         if (claims.get(AUTHORITIES_KEY) == null) {
             throw new RuntimeException("권한정보가 없는 토큰입니다");
 
@@ -129,13 +120,12 @@ public class TokenProvider {
         log.info("[TokenProvider] authorities : {}", authorities);
 
         CustomUser customUser = new CustomUser();
-        customUser.setUserId(claims.getSubject()); // 로그인 ID(loginId) -> 기존 코드(claims.getId())의 문제: 실제 JWT에는 id 필드가 없음
-        customUser.setEmail((String) claims.get("email")); // 이메일 claim이 있을 때만 -> 기존 코드(claims.getSubject())의 문제: subject에 로그인 ID가 들어 있음
+        customUser.setEmail(claims.getSubject());
         customUser.setAuthorities(authorities);
         return new UsernamePasswordAuthenticationToken(customUser, "", authorities);
     }
 
-    public Claims parseClaimes(String jwt) {
+    public Claims parseClaims(String jwt) {
 
         try {
             return Jwts.parserBuilder()
@@ -145,12 +135,13 @@ public class TokenProvider {
         }
     }
 
-    public String getUserId(String accessToken) {
-
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(SKEY)
-                .build()
-                .parseClaimsJws(accessToken).getBody().getSubject();
+    public String getEmail(String accessToken) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(SKEY).build()
+                    .parseClaimsJws(accessToken).getBody().getSubject();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims().getSubject(); //만료된 토큰에서도 email 가져오기
+        }
     }
+
 }

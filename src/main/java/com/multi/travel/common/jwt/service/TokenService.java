@@ -34,10 +34,10 @@ public class TokenService {
     /* ===========================================================
        ✅ 1️⃣ 로그인 시 : AccessToken + RefreshToken 최초 발급
        =========================================================== */
-    public TokenDto issueTokens(String loginId, List<String> roles) {
+    public TokenDto issueTokens(String email, List<String> roles) {
         // ✅ roles 전달
-        String refreshToken = handleRefreshToken(loginId, roles);
-        String accessToken  = createAccessToken(loginId, roles);
+        String refreshToken = handleRefreshToken(email, roles);
+        String accessToken  = createAccessToken(email, roles);
 
         return TokenDto.builder()
                 .accessToken(accessToken)
@@ -54,9 +54,9 @@ public class TokenService {
         }
 
         String pureToken = resolveToken(refreshToken);
-        Claims claims = tokenProvider.parseClaimes(pureToken);
+        Claims claims = tokenProvider.parseClaims(pureToken);
 
-        String loginId = claims.getSubject();
+        String email = claims.getSubject();
         String role = (String) claims.get("auth");
 
         if (role == null || role.isBlank()) {
@@ -66,9 +66,9 @@ public class TokenService {
         List<String> roles = Arrays.asList(role.split(","));
 
         // 새 AccessToken 재발급
-        String newAccessToken = createAccessToken(loginId, roles);
+        String newAccessToken = createAccessToken(email, roles);
 
-        log.info("[TokenService] AccessToken 재발급 완료 → {}", loginId);
+        log.info("[TokenService] AccessToken 재발급 완료 → {}", email);
 
         return TokenDto.builder()
                 .accessToken(newAccessToken)
@@ -80,18 +80,13 @@ public class TokenService {
        ✅ 공용 내부 로직
        =========================================================== */
 
-    /** AccessToken 생성 */
-    private String createAccessToken(String loginId, List<String> roles) {
-        return tokenProvider.generateToken(loginId, roles, "A");
-    }
-
     /** ✅ RefreshToken 생성 및 관리 (JPA 기반, roles 반영) */
     @Transactional(noRollbackFor = RefreshTokenException.class)
-    public String handleRefreshToken(String loginId, List<String> roles) {
+    public String handleRefreshToken(String email, List<String> roles) {
         log.info("🔍 handleRefreshToken() 실행 중, 트랜잭션 활성 상태: {}",
                 TransactionSynchronizationManager.isActualTransactionActive());
 
-        Optional<RefreshToken> existingToken = refreshTokenRepository.findByLoginId(loginId);
+        Optional<RefreshToken> existingToken = refreshTokenRepository.findByEmail(email);
         LocalDateTime now = LocalDateTime.now();
 
         if (existingToken.isPresent()) {
@@ -99,45 +94,52 @@ public class TokenService {
 
             // ✅ 만료 여부 확인
             if (token.getExpiredAt().isBefore(now)) {
-                log.warn("[TokenService] 기존 RefreshToken 만료됨 → {}", loginId);
-                refreshTokenRepository.deleteByLoginId(loginId);
+                log.warn("[TokenService] 기존 RefreshToken 만료됨 → {}", email);
+                refreshTokenRepository.deleteByEmail(email);
                 throw new RefreshTokenException("Refresh token이 만료되었습니다. 다시 로그인해주세요.");
             } else {
-                log.info("[TokenService] 기존 RefreshToken 재사용 → {}", loginId);
+                log.info("[TokenService] 기존 RefreshToken 재사용 → {}", email);
                 return token.getRefreshToken();
             }
         }
 
         // ✅ 새 RefreshToken 생성 (roles 포함)
-        String reToken = createRefreshToken(loginId, roles);
+        String reToken = createRefreshToken(email, roles);
 
         if (tokenProvider.validateToken(reToken)) {
             RefreshToken newToken = RefreshToken.builder()
-                    .loginId(loginId)
+                    .email(email)
                     .refreshToken(reToken)
                     .expiredAt(tokenProvider.getRefreshTokenExpiry())
                     .issuedAt(LocalDateTime.now())
                     .build();
 
             refreshTokenRepository.save(newToken);
-            log.info("[TokenService] 새 RefreshToken 발급 및 저장 완료 → {}", loginId);
+            log.info("[TokenService] 새 RefreshToken 발급 및 저장 완료 → {}", email);
         } else {
-            log.error("[TokenService] RefreshToken 검증 실패 → {}", loginId);
+            log.error("[TokenService] RefreshToken 검증 실패 → {}", email);
             throw new RefreshTokenException("RefreshToken 생성 오류 발생");
         }
 
         return reToken;
     }
 
-    private String createRefreshToken(String loginId, List<String> roles) {
+    /**
+     * AccessToken 생성
+     */
+    private String createAccessToken(String email, List<String> roles) {
+        return tokenProvider.generateToken(email, roles, "A");
+    }
+
+    private String createRefreshToken(String email, List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             // DB에서 role을 가져와서 fallback 시키기
-            String role = memberRepository.findByLoginId(loginId)
+            String role = memberRepository.findByEmail(email)
                     .map(Member::getRole)
                     .orElse("ROLE_USER");
             roles = List.of(role);
         }
-        return tokenProvider.generateToken(loginId, roles, "R");
+        return tokenProvider.generateToken(email, roles, "R");
     }
 
     /** "Bearer " 접두어 제거 */
@@ -154,9 +156,9 @@ public class TokenService {
     @Transactional
     public void deleteRefreshToken(String accessToken) {
         String token = resolveToken(accessToken);
-        String loginId = tokenProvider.getUserId(token);
-        refreshTokenRepository.deleteByLoginId(loginId);
-        log.info("[TokenService] 리프레시 토큰 삭제 완료 → {}", loginId);
+        String email = tokenProvider.getEmail(token);
+        refreshTokenRepository.deleteByEmail(email);
+        log.info("[TokenService] 리프레시 토큰 삭제 완료 → {}", email);
     }
 
     /* ===========================================================
