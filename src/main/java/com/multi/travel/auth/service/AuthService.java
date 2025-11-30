@@ -68,8 +68,6 @@ public class AuthService {
                 .toList();
 
         // 4️⃣ AccessToken + RefreshToken 발급
-        TokenDto tokenDto = tokenService.issueTokens(member.getLoginId(), roles);
-
-        return tokenDto;
+        return tokenService.issueTokens(member.getEmail(), roles);
     }
 }

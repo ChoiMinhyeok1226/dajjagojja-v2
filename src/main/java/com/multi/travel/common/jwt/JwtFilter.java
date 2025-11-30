@@ -34,18 +34,9 @@ public class JwtFilter extends OncePerRequestFilter {
     };
 
     private static final String[] WILDCARD_PATHS = {
-          //  "/spots/view/**",
-          //  "/courses/view/**",
-         //   "/accommodations/view/**",
-          //  "/reviews/target",
-        //    "/members/view/**",
-         //   "/admin/view/**",
             "/auth/**",
             "/public/**",
             "/swagger-ui/**",
-         //   "/member/view/**"
-
-
     };
 
 
@@ -131,15 +122,6 @@ public class JwtFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(7);
-        }
-
-        if (request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("access_token".equals(cookie.getName())) {
-                    log.info("[JwtFilter] 쿠키에서 access_token 찾음");
-                    return cookie.getValue();
-                }
-            }
         }
         return null;
     }

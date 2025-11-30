@@ -25,7 +25,7 @@ import java.util.List;
  * Please explain the class!!!
  *
  * @author : rlagkdus
- * @filename : MemberController
+ * &#064;filename  : MemberController
  * @since : 2025. 11. 8. 토요일
  */
 @RestController
@@ -60,8 +60,8 @@ public class MemberController {
                     .body(new ResponseDto(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.", null));
         }
 
-        log.info("[GET /members/info] 로그인 사용자: {}", user.getUserId());
-        MemberResDto member = memberService.findByLoginId(user.getUserId());
+        log.info("[GET /members/info] 로그인 사용자: {}", user.getEmail());
+        MemberResDto member = memberService.findByLoginId(user.getEmail());
 
         return ResponseEntity.ok(new ResponseDto(HttpStatus.OK, "회원정보 조회 성공", member));
     }
@@ -86,7 +86,7 @@ public class MemberController {
         }
 
 
-        String loginIdFromToken = tokenProvider.getUserId(accessToken);
+        String loginIdFromToken = tokenProvider.getEmail(accessToken);
 
 
         MemberResDto member = memberService.findByLoginId(loginIdFromToken);
@@ -102,7 +102,7 @@ public class MemberController {
     @GetMapping("/plans")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseDto> getMyPlans(@AuthenticationPrincipal CustomUser user) {
-        String loginId = user.getUserId(); // ✅ CustomUser에서 꺼냄
+        String loginId = user.getEmail(); // ✅ CustomUser에서 꺼냄
         List<PlanReqDto> plans = memberService.getMyTripPlans(loginId);
         return ResponseEntity.ok(
                 new ResponseDto(HttpStatus.OK, "내 여행계획 전체조회 성공", plans)
@@ -118,8 +118,8 @@ public class MemberController {
                     .body(new ResponseDto(HttpStatus.UNAUTHORIZED, "인증 정보가 없습니다.", null));
         }
 
-        log.info("[GET /member/mypage] 로그인 사용자: {}", user.getUserId());
-        MemberResDto member = memberService.findByLoginId(user.getUserId());
+        log.info("[GET /member/mypage] 로그인 사용자: {}", user.getEmail());
+        MemberResDto member = memberService.findByLoginId(user.getEmail());
 
         return ResponseEntity.ok(
                 new ResponseDto(HttpStatus.OK, "회원 정보 조회 성공", member)
@@ -134,7 +134,7 @@ public class MemberController {
             @RequestPart(value = "file", required = false) MultipartFile file,  // ✅ 파일 분리
             @AuthenticationPrincipal CustomUser user
     ) {
-        String loginId = user.getUserId(); // 로그인한 아이디
+        String loginId = user.getEmail(); // 로그인한 아이디
         log.info("[MemberController] 회원정보 수정 요청: loginId={}, dto={}", loginId, dto);
 
         // ✅ Service에 dto와 file을 분리해서 전달

@@ -2,7 +2,6 @@ package com.multi.travel.auth.controller;
 
 import com.multi.travel.auth.service.AuthService;
 import com.multi.travel.common.ResponseDto;
-import com.multi.travel.common.jwt.TokenProvider;
 import com.multi.travel.common.jwt.dto.TokenDto;
 import com.multi.travel.common.jwt.service.TokenService;
 import com.multi.travel.member.dto.MemberReqDto;
@@ -26,7 +25,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final TokenService tokenService;
-    private final TokenProvider tokenProvider;
 
     /**  회원가입 */
     @PostMapping("/signup")
@@ -99,18 +97,6 @@ public class AuthController {
         if (accessToken != null) {
             tokenService.deleteRefreshToken(accessToken);
         }
-
-        // ✅ 쿠키 만료 처리
-        Cookie accessCookie = new Cookie("access_token", null);
-        accessCookie.setMaxAge(0);
-        accessCookie.setPath("/");
-
-        Cookie refreshCookie = new Cookie("refresh_token", null);
-        refreshCookie.setMaxAge(0);
-        refreshCookie.setPath("/");
-
-        response.addCookie(accessCookie);
-        response.addCookie(refreshCookie);
 
         return ResponseEntity.ok(new ResponseDto(HttpStatus.OK, "로그아웃 성공", null));
     }
