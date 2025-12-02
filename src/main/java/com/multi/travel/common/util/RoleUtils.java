@@ -9,7 +9,7 @@ package com.multi.travel.common.util;
  */
 
 
-import com.multi.travel.auth.dto.CustomUser;
+import com.multi.travel.auth.user.CustomUser;
 
 public class RoleUtils {
     public static final String ADMIN = "ROLE_ADMIN";
