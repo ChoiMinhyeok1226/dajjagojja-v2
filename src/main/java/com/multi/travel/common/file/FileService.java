@@ -16,9 +16,8 @@ import java.util.UUID;
 @Slf4j
 public class FileService {
 
-    //@Value("${file.upload-dir:/tmp}") // 기본값 지정 (예: /tmp)
     @Value("${image.review.image-dir}") // 기본값 지정 (예: /tmp)
-    private String uploadDir;
+    private String imageDir;
 
 
     /**
@@ -30,7 +29,7 @@ public class FileService {
             String ext = getExtension(originalName);
             String safeName = UUID.randomUUID() + ext;
 
-            Path dir = Paths.get(uploadDir);
+            Path dir = Paths.get(imageDir);
             Files.createDirectories(dir); // 디렉토리가 없으면 생성
 
             Path dest = dir.resolve(safeName);
@@ -54,7 +53,7 @@ public class FileService {
      */
     public void delete(String storedFileName) {
         try {
-            Path path = Paths.get(uploadDir, storedFileName);
+            Path path = Paths.get(imageDir, storedFileName);
             Files.deleteIfExists(path);
         } catch (IOException e) {
             log.error("파일 삭제 실패: {}", storedFileName, e);
